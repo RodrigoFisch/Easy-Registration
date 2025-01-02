@@ -3,10 +3,14 @@ package com.rodrigofisch.easyregistration.service;
 import com.rodrigofisch.easyregistration.controller.dto.RegisterInDto;
 import com.rodrigofisch.easyregistration.controller.dto.RegisterOutDto;
 import com.rodrigofisch.easyregistration.domain.RegisterPerson;
+import com.rodrigofisch.easyregistration.exception.RegisterPersonErrorEnum;
+import com.rodrigofisch.easyregistration.exception.RegisterPersonException;
 import com.rodrigofisch.easyregistration.repository.RegisterPersonRepository;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,40 +26,89 @@ public class RegisterPersonService {
     private ModelMapper mapper;
 
     public RegisterOutDto create (RegisterInDto registerInDto){
+        if (personRepository.existsByCpf(registerInDto.getCpf())) {
+            throw new RegisterPersonException(RegisterPersonErrorEnum.CPF_ALREADY_REGISTERED);
+        }
+        if (personRepository.existsByEmail(registerInDto.getEmail())) {
+            throw new RegisterPersonException(RegisterPersonErrorEnum.EMAIL_ALREADY_REGISTERED);
+        }
+
         RegisterPerson registerPerson = mapper.map(registerInDto, RegisterPerson.class);
-        personRepository.save(registerPerson);
-        RegisterOutDto registerOutDto = mapper.map(registerPerson, RegisterOutDto.class);
-        return registerOutDto;
+        try {
+            personRepository.save(registerPerson);
+        } catch (DataIntegrityViolationException e) {
+            throw new RegisterPersonException(RegisterPersonErrorEnum.REGISTRATION_FAILED, e);
+        } catch (Exception e) {
+            throw new RegisterPersonException(RegisterPersonErrorEnum.UNEXPECTED_ERROR, e);
+        }
+        // Mapeia a entidade para o DTO de saída
+        return mapper.map(registerPerson, RegisterOutDto.class);
     }
 
     public RegisterOutDto updateByCpf(String cpf, RegisterInDto registerInDto){
         Optional<RegisterPerson> optional = personRepository.findByCpf(cpf);
-        RegisterPerson upDateRegister = optional.get();
-        mapper.map(registerInDto, upDateRegister);
-        personRepository.save(upDateRegister);
-        RegisterOutDto registerOutDto = mapper.map(upDateRegister, RegisterOutDto.class);
+        // Lança exceção se o CPF não for encontrado
+        RegisterPerson existingPerson = optional.orElseThrow(() ->
+                new RegisterPersonException(RegisterPersonErrorEnum.CPF_NOT_FOUND)
+        );
+
+        // Verifica se o novo CPF está sendo registrado por outra pessoa
+        if (!cpf.equals(registerInDto.getCpf()) && personRepository.existsByCpf(registerInDto.getCpf())) {
+            throw new RegisterPersonException(RegisterPersonErrorEnum.CPF_ALREADY_REGISTERED);
+        }
+        // Verifica se o email está sendo usado por outro registro
+        if (personRepository.existsByEmail(registerInDto.getEmail())) {
+            throw new RegisterPersonException(RegisterPersonErrorEnum.EMAIL_ALREADY_REGISTERED);
+        }
+        // Mapeia os dados para atualizar o registro
+        mapper.map(registerInDto, existingPerson);
+
+        try {
+            // Salva o registro atualizado
+            personRepository.save(existingPerson);
+        } catch (Exception e) {
+            throw new RegisterPersonException(RegisterPersonErrorEnum.UPDATE_FAILED, e);
+        }
+
+        // Mapeia o objeto atualizado para o DTO de saída
+        RegisterOutDto registerOutDto = mapper.map(existingPerson, RegisterOutDto.class);
+
         return registerOutDto;
     }
 
     public RegisterOutDto consultByCpf(String cpf){
         Optional<RegisterPerson> optional = personRepository.findByCpf(cpf);
-        RegisterPerson cpfLookup = optional.get();
-        RegisterOutDto registerOutDto = mapper.map(cpfLookup, RegisterOutDto.class);
-        return registerOutDto;
+        // Se não encontrar, lança exceção
+        RegisterPerson cpfLookup = optional.orElseThrow(() ->
+                new RegisterPersonException(RegisterPersonErrorEnum.CPF_NOT_FOUND)
+        );
+        // Mapeia a entidade para o DTO de saída
+        return mapper.map(cpfLookup, RegisterOutDto.class);
     }
 
     public String delete(String cpf){
         Optional<RegisterPerson> optional = personRepository.findByCpf(cpf);
-        personRepository.delete(optional.get());
-        return "Registro deletado";
+        // Se não encontrar, lança exceção
+        RegisterPerson cpfLookup = optional.orElseThrow(() ->
+                new RegisterPersonException(RegisterPersonErrorEnum.CPF_NOT_FOUND)
+        );
+        try {
+            // Deleta o registro
+            personRepository.delete(cpfLookup);
+        } catch (Exception e) {
+            throw new RegisterPersonException(RegisterPersonErrorEnum.DELETE_FAILED, e);
+        }
+        return ("Registro deletado com sucesso");
     }
 
     public List<RegisterOutDto> readRegisteres(){
         List<RegisterPerson> registerPersonList = personRepository.findAll();
+        if (registerPersonList.isEmpty()) {
+            return (List<RegisterOutDto>) ResponseEntity.noContent().build(); // Retorna 204 No Content se não houver registros
+        }
         List<RegisterOutDto> registerOutDtoList = mapper.map(registerPersonList, new TypeToken<List<RegisterOutDto>>()
         {}.getType());
         return registerOutDtoList;
     }
-
 
 }
