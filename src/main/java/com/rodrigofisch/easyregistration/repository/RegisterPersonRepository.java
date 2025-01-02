@@ -9,4 +9,7 @@ import java.util.Optional;
 @Repository
 public interface RegisterPersonRepository extends MongoRepository<RegisterPerson, String> {
     Optional<RegisterPerson> findByCpf(String cpf);
+
+    boolean existsByCpf(String cpf);
+    boolean existsByEmail(String email);
 }
