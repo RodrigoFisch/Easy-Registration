@@ -24,4 +24,8 @@ public class RegisterInDto {
     @Size(min = 1, max = 50, message = "Limiti máximo de caracteres execido")
     @Email(message = "E-mail inválido")
     private String email;
+
+    @NotBlank(message = "Senha obrigatória")
+    @Size(min = 8)
+    private String password;
 }

@@ -14,4 +14,5 @@ public class RegisterOutDto {
     private String name;
     private String cpf;
     private String email;
+    private String password;
 }

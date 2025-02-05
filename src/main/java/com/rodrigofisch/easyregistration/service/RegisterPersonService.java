@@ -11,6 +11,7 @@ import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,6 +26,9 @@ public class RegisterPersonService {
     @Autowired
     private ModelMapper mapper;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     public RegisterOutDto create (RegisterInDto registerInDto){
         if (personRepository.existsByCpf(registerInDto.getCpf())) {
             throw new RegisterPersonException(RegisterPersonErrorEnum.CPF_ALREADY_REGISTERED);
@@ -34,6 +38,8 @@ public class RegisterPersonService {
         }
 
         RegisterPerson registerPerson = mapper.map(registerInDto, RegisterPerson.class);
+
+        registerPerson.setPasswword(passwordEncoder.encode(registerInDto.getPassword()));
         try {
             personRepository.save(registerPerson);
         } catch (DataIntegrityViolationException e) {
