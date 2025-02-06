@@ -16,7 +16,9 @@ public enum RegisterPersonErrorEnum {
     QUERY_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possível realizar a consulta."),
     QUERY_ALL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possível realizar a consulta da lista."),
     DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possível excluir o registro."),
-    UNEXPECTED_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Ocorreu um erro inesperado.");
+    UNEXPECTED_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Ocorreu um erro inesperado."),
+    INVALID_PASSWORD(HttpStatus.BAD_REQUEST,"A senha deve conter no mínimo 8 caracteres," +
+            "incluindo letras maiúsculas, minúsculas, números e caracteres especiais." );
 
     private HttpStatus httpStatus;
     private String message;

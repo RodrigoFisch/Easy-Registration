@@ -1,4 +1,4 @@
-package com.rodrigofisch.easyregistration.configurations;
+package com.rodrigofisch.easyregistration.configurations.security;
 
 import com.rodrigofisch.easyregistration.domain.RegisterPerson;
 import com.rodrigofisch.easyregistration.repository.RegisterPersonRepository;
@@ -26,21 +26,21 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf ->csrf.disable()) // Desativa CSRF (armazenamento de sessão de usuario
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/register-person").permitAll() // Rotas públicas
-                        .anyRequest().authenticated() // Outras rotas precisam de autenticação
-                )
-                .httpBasic(withDefaults()); // Configuração de autenticação HTTP básica
-        return http.build();
-    }
-
+    //Definir o codificador de senha
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    //Definir UserDetailsService para carregar usuários do banco
+    @Bean
+    public UserDetailsService userDetailsService(RegisterPersonRepository personRepository) {
+        return cpf -> {
+            RegisterPerson person = personRepository.findByCpf(cpf)
+                    .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
+
+            return new User(person.getEmail(), person.getPasswword(), List.of(new SimpleGrantedAuthority("USER")));
+        };
     }
 
     //autenticar os usuários com base nos dados armazenados no banco
@@ -56,14 +56,19 @@ public class SecurityConfig {
         return new ProviderManager(List.of(authProvider));
     }
 
+    //SecurityFilterChain com regras de acesso e autenticação
     @Bean
-    public UserDetailsService userDetailsService(RegisterPersonRepository personRepository) {
-        return cpf -> {
-            RegisterPerson person = personRepository.findByCpf(cpf)
-                    .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
-
-            return new User(person.getEmail(), person.getPasswword(), List.of(new SimpleGrantedAuthority("USER")));
-        };
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf ->csrf.disable()) // Desativa CSRF (armazenamento de sessão de usuario
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/register-person").permitAll() // Rotas públicas
+                        .anyRequest().authenticated() // Outras rotas precisam de autenticação
+                )
+                .httpBasic(withDefaults()); // Configuração de autenticação HTTP básica
+        return http.build();
     }
+
+
 
 }

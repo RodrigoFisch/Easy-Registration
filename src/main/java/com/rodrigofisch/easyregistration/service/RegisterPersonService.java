@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Service
 public class RegisterPersonService {
@@ -29,6 +30,8 @@ public class RegisterPersonService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    private static final String PASSWORD_PATTERN = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$";
+
     public RegisterOutDto create (RegisterInDto registerInDto){
         if (personRepository.existsByCpf(registerInDto.getCpf())) {
             throw new RegisterPersonException(RegisterPersonErrorEnum.CPF_ALREADY_REGISTERED);
@@ -37,9 +40,12 @@ public class RegisterPersonService {
             throw new RegisterPersonException(RegisterPersonErrorEnum.EMAIL_ALREADY_REGISTERED);
         }
 
+        // Valida a senha antes de continuar
+        validatePassword(registerInDto.getPassword());
+
         RegisterPerson registerPerson = mapper.map(registerInDto, RegisterPerson.class);
 
-        registerPerson.setPasswword(passwordEncoder.encode(registerInDto.getPassword()));
+        registerPerson.setPasswword(passwordEncoder.encode(registerInDto.getPassword())); // Criptografa a senha
         try {
             personRepository.save(registerPerson);
         } catch (DataIntegrityViolationException e) {
@@ -115,6 +121,12 @@ public class RegisterPersonService {
         List<RegisterOutDto> registerOutDtoList = mapper.map(registerPersonList, new TypeToken<List<RegisterOutDto>>()
         {}.getType());
         return registerOutDtoList;
+    }
+
+    private void validatePassword(String password) {
+        if (!Pattern.matches(PASSWORD_PATTERN, password)) {
+            throw new RegisterPersonException(RegisterPersonErrorEnum.INVALID_PASSWORD);
+        }
     }
 
 }
