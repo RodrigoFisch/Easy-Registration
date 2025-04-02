@@ -24,6 +24,6 @@ public class CustomUserDetailsService implements UserDetailsService {
         RegisterPerson person = personRepository.findByCpf(cpf)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
 
-        return new User(person.getEmail(), person.getPasswword(), List.of(new SimpleGrantedAuthority("USER")));
+        return new User(person.getEmail(), person.getPassword(), List.of(new SimpleGrantedAuthority("USER")));
     }
 }
