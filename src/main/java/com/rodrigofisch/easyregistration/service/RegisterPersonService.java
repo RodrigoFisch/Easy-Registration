@@ -45,7 +45,7 @@ public class RegisterPersonService {
 
         RegisterPerson registerPerson = mapper.map(registerInDto, RegisterPerson.class);
 
-        registerPerson.setPasswword(passwordEncoder.encode(registerInDto.getPassword())); // Criptografa a senha
+        registerPerson.setPassword(passwordEncoder.encode(registerInDto.getPassword()));
         try {
             personRepository.save(registerPerson);
         } catch (DataIntegrityViolationException e) {
