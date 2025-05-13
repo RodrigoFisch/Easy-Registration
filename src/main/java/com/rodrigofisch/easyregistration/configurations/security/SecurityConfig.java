@@ -3,7 +3,6 @@ package com.rodrigofisch.easyregistration.configurations.security;
 import com.rodrigofisch.easyregistration.domain.RegisterPerson;
 import com.rodrigofisch.easyregistration.repository.RegisterPersonRepository;
 import com.rodrigofisch.easyregistration.service.JwtService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -31,26 +30,17 @@ public class SecurityConfig {
 
 
     private final JwtService jwtService;
+    private final UserDetailsService userDetailsService;
 
-    public SecurityConfig(JwtService jwtService) {
+    public SecurityConfig(JwtService jwtService, UserDetailsService userDetailsService) {
         this.jwtService = jwtService;
+        this.userDetailsService = userDetailsService;
     }
 
     //Definir o codificador de senha
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    }
-
-    //Definir UserDetailsService para carregar usuários do banco
-    @Bean
-    public UserDetailsService userDetailsService(RegisterPersonRepository personRepository) {
-        return email -> {
-            RegisterPerson person = personRepository.findByEmail(email)
-                    .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
-
-            return new User(person.getEmail(), person.getPassword(), List.of(new SimpleGrantedAuthority("USER")));
-        };
     }
 
     //autenticar os usuários com base nos dados armazenados no banco
@@ -69,13 +59,14 @@ public class SecurityConfig {
     //SecurityFilterChain com regras de acesso e autenticação
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        JwtAuthorizationFilter jwtAuthorizationFilter = new JwtAuthorizationFilter(jwtService, userDetailsService);
         http
                 .csrf(csrf ->csrf.disable()) // Desativa CSRF (armazenamento de sessão de usuario
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login", "/auth/register").permitAll() // Rotas públicas
                         .anyRequest().authenticated() // Outras rotas precisam de autenticação
                 )
-                .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class) // Adiciona o filtro JWT
+                .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class) // Adiciona o filtro JWT
                 .httpBasic(withDefaults()); // Configuração de autenticação HTTP básica
         return http.build();
     }

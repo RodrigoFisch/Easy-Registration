@@ -21,7 +21,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        RegisterPerson person = personRepository.findByCpf(email)
+        RegisterPerson person = personRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
 
         return new User(person.getEmail(), person.getPassword(), List.of(new SimpleGrantedAuthority("USER")));
