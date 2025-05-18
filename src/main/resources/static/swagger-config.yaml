@@ -1,0 +1,102 @@
+openapi: 3.0.1
+info:
+  title: Easy Registration API
+  description: API para gerenciamento de usuários, autenticação com JWT e cadastro.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Servidor local de desenvolvimento
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login do usuário
+      description: Autentica usuário e retorna um token JWT.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: usuario@exemplo.com
+                password:
+                  type: string
+                  example: suaSenha123
+      responses:
+        '200':
+          description: Login bem-sucedido - token JWT retornado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzUxMiJ9...
+        '401':
+          description: Credenciais inválidas
+
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Registro de novo usuário
+      description: Registra um novo usuário na aplicação.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: novo@usuario.com
+                password:
+                  type: string
+                  example: senhaForte!234
+                name:
+                  type: string
+                  example: Rodrigo Fisch
+      responses:
+        '201':
+          description: Usuário criado com sucesso
+        '400':
+          description: Dados inválidos para registro
+
+  /user/profile:
+    get:
+      tags:
+        - User
+      summary: Obter perfil do usuário autenticado
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dados do perfil do usuário
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  email:
+                    type: string
+                    example: usuario@exemplo.com
+                  name:
+                    type: string
+                    example: Rodrigo Fisch
+        '401':
+          description: Não autorizado - token inválido ou ausente
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

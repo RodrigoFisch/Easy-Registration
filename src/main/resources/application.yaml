@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: easy-registration
+
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/register_person
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    url: /swagger-config.yaml
+
+jwt:
+  secret: 8Y1qS1zFxMi3Oxn1sD1z9lHo0uQrTyvBkHRU8sImuB8kW0itSD5CeKhOeP3GmPfHe8uBhvqqJgvvR9NdHxFNdQ==
+  expiration: 86400000 # exemplo: 1 dia em milissegundos

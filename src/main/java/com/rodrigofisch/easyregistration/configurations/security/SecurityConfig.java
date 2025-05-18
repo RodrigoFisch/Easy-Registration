@@ -63,7 +63,13 @@ public class SecurityConfig {
         http
                 .csrf(csrf ->csrf.disable()) // Desativa CSRF (armazenamento de sessão de usuario
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login", "/auth/register").permitAll() // Rotas públicas
+                        .requestMatchers(
+                                "/auth/login",
+                                "/auth/register",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll() // Rotas públicas
                         .anyRequest().authenticated() // Outras rotas precisam de autenticação
                 )
                 .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class) // Adiciona o filtro JWT
