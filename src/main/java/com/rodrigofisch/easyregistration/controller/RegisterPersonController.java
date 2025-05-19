@@ -20,6 +20,7 @@ public class RegisterPersonController {
     @Autowired
     private RegisterPersonService service;
 
+    //Pode ser utilizado futuramente para cadastros manuais
     @PostMapping
     public ResponseEntity<RegisterOutDto> create(@RequestBody @Valid RegisterInDto registerInDto){
         log.info("Cadastro realizado: {}", registerInDto);
