@@ -1,10 +1,13 @@
 package com.rodrigofisch.easyregistration.controller;
 
+import com.rodrigofisch.easyregistration.configurations.security.PasswordValidator;
 import com.rodrigofisch.easyregistration.controller.dto.LoginRequest;
 import com.rodrigofisch.easyregistration.controller.dto.RegisterInDto;
+import com.rodrigofisch.easyregistration.controller.dto.RegisterOutDto;
 import com.rodrigofisch.easyregistration.domain.RegisterPerson;
 import com.rodrigofisch.easyregistration.repository.RegisterPersonRepository;
 import com.rodrigofisch.easyregistration.service.JwtService;
+import com.rodrigofisch.easyregistration.service.RegisterPersonService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -24,35 +27,24 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     // Injeção das dependências
-    private final RegisterPersonRepository registerPersonRepository;
+    private final RegisterPersonRepository personRepository;
 
     private final PasswordEncoder passwordEncoder;
 
     private final AuthenticationManager authenticationManager;
 
+    private final PasswordValidator passwordValidator;
+
+    private final RegisterPersonService service;
+
     private final JwtService jwtService;
 
     @PostMapping("/register")  // Define que este método responde a requisições POST no caminho /auth/register
-    public ResponseEntity<String> register(@RequestBody @Valid RegisterInDto request) {
+    public ResponseEntity<RegisterOutDto> register(@RequestBody @Valid RegisterInDto request) {
         log.info("Tentativa de registro: {}", request);
-        // Verificação de e-mail duplicado
-        if (registerPersonRepository.existsByEmail(request.getEmail())) {
-            return ResponseEntity.badRequest().body("Email já cadastrado");
-        }
-
-        //Convertendo
-        RegisterPerson person = new RegisterPerson();
-        person.setName(request.getName());
-        person.setEmail(request.getEmail());
-        person.setPassword(request.getPassword());
-        // Criptografando a senha antes de salvar no banco
-        request.setPassword(passwordEncoder.encode(request.getPassword()));
-
-        // Salvando o novo usuário no MongoDB
-        registerPersonRepository.save(person);
-        return ResponseEntity.ok("Usuário registrado com sucesso");
+        RegisterOutDto response = service.create(request);
+        return ResponseEntity.ok(response);
     }
-
 
     // Método para autenticar o usuário e gerar o token JWT
     @PostMapping("/login")  // Define que este método responde a requisições POST no caminho /auth/login
@@ -66,7 +58,7 @@ public class AuthController {
         );
 
         // Verificando se o usuário existe no banco de dados
-        RegisterPerson user = registerPersonRepository.findByEmail(loginRequest.getEmail())
+        RegisterPerson user = personRepository.findByEmail(loginRequest.getEmail())
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
         // Gerando o token JWT com as informações do usuário autenticado

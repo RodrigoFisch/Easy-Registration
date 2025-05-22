@@ -1,5 +1,6 @@
 package com.rodrigofisch.easyregistration.service;
 
+import com.rodrigofisch.easyregistration.configurations.security.PasswordValidator;
 import com.rodrigofisch.easyregistration.controller.dto.RegisterInDto;
 import com.rodrigofisch.easyregistration.controller.dto.RegisterOutDto;
 import com.rodrigofisch.easyregistration.domain.RegisterPerson;
@@ -30,18 +31,14 @@ public class RegisterPersonService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    private static final String PASSWORD_PATTERN = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$";
+   @Autowired
+    PasswordValidator passwordValidator;
 
     public RegisterOutDto create (RegisterInDto registerInDto){
-        if (personRepository.existsByCpf(registerInDto.getCpf())) {
-            throw new RegisterPersonException(RegisterPersonErrorEnum.CPF_ALREADY_REGISTERED);
-        }
-        if (personRepository.existsByEmail(registerInDto.getEmail())) {
-            throw new RegisterPersonException(RegisterPersonErrorEnum.EMAIL_ALREADY_REGISTERED);
-        }
+        checkEmailAndCpf(registerInDto);
 
         // Valida a senha antes de continuar
-        validatePassword(registerInDto.getPassword());
+        passwordValidator.validate(registerInDto.getPassword());
 
         RegisterPerson registerPerson = mapper.map(registerInDto, RegisterPerson.class);
 
@@ -123,10 +120,16 @@ public class RegisterPersonService {
         return registerOutDtoList;
     }
 
-    private void validatePassword(String password) {
-        if (!Pattern.matches(PASSWORD_PATTERN, password)) {
-            throw new RegisterPersonException(RegisterPersonErrorEnum.INVALID_PASSWORD);
+    public void checkEmailAndCpf(RegisterInDto registerInDto){
+
+        if (personRepository.existsByCpf(registerInDto.getCpf())) {
+            throw new RegisterPersonException(RegisterPersonErrorEnum.CPF_ALREADY_REGISTERED);
+        }
+        if (personRepository.existsByEmail(registerInDto.getEmail())) {
+            throw new RegisterPersonException(RegisterPersonErrorEnum.EMAIL_ALREADY_REGISTERED);
         }
     }
+
+
 
 }
