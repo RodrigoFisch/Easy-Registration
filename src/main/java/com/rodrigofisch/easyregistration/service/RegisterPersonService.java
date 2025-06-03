@@ -1,6 +1,5 @@
 package com.rodrigofisch.easyregistration.service;
 
-import com.rodrigofisch.easyregistration.configurations.security.PasswordValidator;
 import com.rodrigofisch.easyregistration.controller.dto.RegisterInDto;
 import com.rodrigofisch.easyregistration.controller.dto.RegisterOutDto;
 import com.rodrigofisch.easyregistration.domain.RegisterPerson;
@@ -31,14 +30,8 @@ public class RegisterPersonService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-   @Autowired
-    PasswordValidator passwordValidator;
-
     public RegisterOutDto create (RegisterInDto registerInDto){
         checkEmailAndCpf(registerInDto);
-
-        // Valida a senha antes de continuar
-        passwordValidator.validate(registerInDto.getPassword());
 
         RegisterPerson registerPerson = mapper.map(registerInDto, RegisterPerson.class);
 

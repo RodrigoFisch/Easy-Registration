@@ -1,6 +1,7 @@
 package com.rodrigofisch.easyregistration.controller.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,5 +28,10 @@ public class RegisterInDto {
 
     @NotBlank(message = "Senha obrigatória")
     @Size(min = 8)
+    @Pattern(
+            regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
+            message = "A senha deve conter no mínimo 8 caracteres, incluindo letra maiúscula, minúscula, número e " +
+                    "caractere especial"
+    )
     private String password;
 }

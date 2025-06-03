@@ -1,6 +1,5 @@
 package com.rodrigofisch.easyregistration.controller;
 
-import com.rodrigofisch.easyregistration.configurations.security.PasswordValidator;
 import com.rodrigofisch.easyregistration.controller.dto.LoginRequest;
 import com.rodrigofisch.easyregistration.controller.dto.RegisterInDto;
 import com.rodrigofisch.easyregistration.controller.dto.RegisterOutDto;
@@ -11,7 +10,6 @@ import com.rodrigofisch.easyregistration.service.RegisterPersonService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,8 +30,6 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
 
     private final AuthenticationManager authenticationManager;
-
-    private final PasswordValidator passwordValidator;
 
     private final RegisterPersonService service;
 
